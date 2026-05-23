@@ -2,6 +2,8 @@ import csv
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database.models import StudentRecord
+from app.database import models
+from app.schemas.students import StudentCreate, StudentUpdate
 
 class StudentCRUD:
     """
@@ -58,5 +60,44 @@ class StudentCRUD:
         ).scalar()
         
         return round(float(avg_score), 2) if avg_score else 0.0
+    
+    def get_student_by_id(self, db: Session, student_id: int):
+        """
+        Получение студента по его уникальному идентификатору (ID)
+        """
+        return db.query(models.StudentRecord).filter(models.StudentRecord.id == student_id).first()
+
+    def create_student(self, db: Session, student_data: StudentCreate):
+        """
+        Создание новой записи студента в базе данных
+        """
+        db_student = models.StudentRecord(**student_data.model_dump())
+        db.add(db_student)
+        db.commit()
+        db.refresh(db_student)
+        return db_student
+
+    def update_student(self, db: Session, student_id: int, student_data: StudentUpdate):
+        """
+        Обновление данных существующего студента по его ID
+        """
+        db_student = self.get_student_by_id(db, student_id)
+        if db_student:
+            update_data = student_data.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(db_student, key, value)
+            db.commit()
+            db.refresh(db_student)
+        return db_student
+
+    def delete_student(self, db: Session, student_id: int):
+        """
+        Удаление записи студента из базы данных по его ID
+        """
+        db_student = self.get_student_by_id(db, student_id)
+        if db_student:
+            db.delete(db_student)
+            db.commit()
+        return db_student
 
 student_crud = StudentCRUD()

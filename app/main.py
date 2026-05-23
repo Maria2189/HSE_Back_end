@@ -1,10 +1,15 @@
 from fastapi import FastAPI
-from app.routers import appeals
+from app.routers import appeals, students # Импортируем новый роутер
+from app.database.session import engine
+from app.database import models
 
-app = FastAPI(
-    title="Microlearning Platform API",
-    description="Backend for microlearning platform",
-    version="1.0.0"
-)
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Microlearning Platform API")
 
 app.include_router(appeals.router)
+app.include_router(students.router)
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to Microlearning Platform API"}
