@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from app.routers import homework
+from app.routers import appeals
 
 app = FastAPI(
     title="Microlearning Platform API",
-    description="Бэкенд для платформы микрообучения"
+    description="Backend for microlearning platform",
+    version="1.0.0"
 )
 
-app.include_router(homework.router)
+app.include_router(appeals.router)

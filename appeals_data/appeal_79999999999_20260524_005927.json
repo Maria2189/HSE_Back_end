@@ -1,0 +1,11 @@
+{
+    "surname": "Иванов",
+    "name": "Иван",
+    "dob": "2001-05-23",
+    "phone": "+79999999999",
+    "email": "ivan@example.com",
+    "reasons": [
+        "нет доступа к сети"
+    ],
+    "problem_discovery_time": "2026-05-23T21:58:19.729000Z"
+}
