@@ -12,3 +12,7 @@ __pycache__/
 .idea/
 
 appeals_data/
+
+*.db
+*.sqlite
+*.sqlite3
