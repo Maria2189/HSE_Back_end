@@ -10,3 +10,11 @@ class StudentRecord(Base):
     faculty = Column(String, nullable=False)
     course = Column(String, nullable=False)
     score = Column(Integer, nullable=False)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    role = Column(String, default="readonly", nullable=False)

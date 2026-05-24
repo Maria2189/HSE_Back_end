@@ -1,15 +1,18 @@
 import os
 import json
 from datetime import datetime
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.schemas.appeals import AppealCreate
+from app.core.dependencies import RoleChecker
 
 router = APIRouter(
     prefix="/appeals",
     tags=["Appeals"]
 )
 
-@router.post("/")
+allow_submit_appeal = RoleChecker(["readonly", "student", "admin"])
+
+@router.post("/", dependencies=[Depends(allow_submit_appeal)])
 async def create_appeal(appeal: AppealCreate):
     appeal_data = appeal.model_dump(mode='json')
     
