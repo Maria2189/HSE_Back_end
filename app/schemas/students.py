@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class StudentBase(BaseModel):
     first_name: str
@@ -23,3 +23,6 @@ class StudentResponse(StudentBase):
 
     class Config:
         from_attributes = True
+
+class BulkDeleteRequest(BaseModel):
+    student_ids: List[int]

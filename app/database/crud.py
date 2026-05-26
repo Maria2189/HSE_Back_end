@@ -86,5 +86,10 @@ class StudentCRUD:
             db.delete(db_student)
             db.commit()
         return db_student
+    
+    def delete_students_bulk(self, db: Session, student_ids: list[int]):
+        """Удаление записей по списку ID"""
+        db.query(models.StudentRecord).filter(models.StudentRecord.id.in_(student_ids)).delete(synchronize_session=False)
+        db.commit()
 
 student_crud = StudentCRUD()
