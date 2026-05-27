@@ -1,0 +1,36 @@
+# Персональные данные
+.env
+
+# Виртуальные окружения
+venv/
+env/
+.venv/
+
+# Кэш Python и тестов
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Системные папки системы контроля версий
+.git/
+
+# Локальные базы данных
+*.db
+*.sqlite
+*.sqlite3
+
+# Локальные данные приложения
+appeals_data/
+
+# Настройки IDE
+.vscode/
+.idea/
+
+# Файлы самого Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

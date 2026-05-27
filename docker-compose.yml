@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: hse_fastapi_app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0 
+    volumes:
+      - ./app/database:/app/app/database
+
+  redis:
+    image: redis:alpine
+    container_name: hse_redis
+    ports:
+      - "6379:6379"

@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.database.session import Base, get_db
+from app.core.security import create_access_token
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.sqlite"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
@@ -29,6 +30,21 @@ def setup_database():
 def client():
     with TestClient(app) as c:
         yield c
+
+# ==========================================
+# ФИКСТУРЫ ДЛЯ АВТОРИЗАЦИИ
+# ==========================================
+@pytest.fixture
+def admin_headers():
+    """Генерирует токен с правами admin для тестов"""
+    token = create_access_token(data={"sub": "admin@test.com", "role": "admin"})
+    return {"Authorization": f"Bearer {token}"}
+    
+@pytest.fixture
+def readonly_headers():
+    """Генерирует токен с правами readonly для тестов"""
+    token = create_access_token(data={"sub": "user@test.com", "role": "readonly"})
+    return {"Authorization": f"Bearer {token}"}
 
 # ==========================================
 # ЭНДПОИНТ 1: /auth/register
@@ -143,3 +159,79 @@ def test_create_appeal_bad_data(client):
     )
     assert response.status_code == 422
     assert "Значение должно начинаться с заглавной буквы, содержать только кириллицу" in response.text
+
+# ==========================================
+# ЭНДПОИНТЫ 6: /students/ (Бизнес-логика)
+# ==========================================
+def test_create_student_success(client, admin_headers):
+    """Успешное создание студента (роль admin)"""
+    student_data = {
+        "first_name": "Мария",
+        "last_name": "Иванова",
+        "faculty": "ПИ",
+        "course": "Python",
+        "score": 95
+    }
+    response = client.post("/students/", json=student_data, headers=admin_headers)
+    assert response.status_code == 201
+    
+    data = response.json()
+    assert data["first_name"] == "Мария"
+    assert data["course"] == "Python"
+    assert "id" in data
+
+def test_create_student_forbidden(client, readonly_headers):
+    """Ошибка: попытка создать студента с правами readonly (проверка RBAC)"""
+    student_data = {
+        "first_name": "Иван",
+        "last_name": "Петров",
+        "faculty": "ПИ",
+        "course": "Java",
+        "score": 80
+    }
+    response = client.post("/students/", json=student_data, headers=readonly_headers)
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Operation not permitted"
+
+def test_read_student_success(client, admin_headers):
+    """Успешное получение данных студента"""
+    create_res = client.post(
+        "/students/", 
+        json={"first_name": "Олег", "last_name": "Попов", "faculty": "БИ", "course": "Математика", "score": 75}, 
+        headers=admin_headers
+    )
+    student_id = create_res.json()["id"]
+
+    response = client.get(f"/students/{student_id}", headers=admin_headers)
+    assert response.status_code == 200
+    assert response.json()["first_name"] == "Олег"
+    assert response.json()["score"] == 75
+
+def test_update_student_success(client, admin_headers):
+    """Успешное обновление баллов студента (PATCH)"""
+    create_res = client.post(
+        "/students/", 
+        json={"first_name": "Анна", "last_name": "Смирнова", "faculty": "ФКН", "course": "БД", "score": 60}, 
+        headers=admin_headers
+    )
+    student_id = create_res.json()["id"]
+
+    update_res = client.patch(f"/students/{student_id}", json={"score": 100}, headers=admin_headers)
+    assert update_res.status_code == 200
+    assert update_res.json()["score"] == 100
+    assert update_res.json()["first_name"] == "Анна"
+
+def test_delete_student_success(client, admin_headers):
+    """Успешное удаление студента из БД"""
+    create_res = client.post(
+        "/students/", 
+        json={"first_name": "Тест", "last_name": "Удаляемый", "faculty": "ПИ", "course": "C++", "score": 50}, 
+        headers=admin_headers
+    )
+    student_id = create_res.json()["id"]
+
+    del_res = client.delete(f"/students/{student_id}", headers=admin_headers)
+    assert del_res.status_code == 204
+
+    get_res = client.get(f"/students/{student_id}", headers=admin_headers)
+    assert get_res.status_code == 404

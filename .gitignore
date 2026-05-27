@@ -1,18 +1,37 @@
+# Виртуальные окружения
 venv/
 env/
+.venv/
 
+# Кэш Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
+# Секреты и конфигурации
 .env
 
+# Настройки IDE
 .vscode/
 .idea/
 
+# Локальные данные приложения
 appeals_data/
 
+# Локальные базы данных
 *.db
 *.sqlite
 *.sqlite3
+
+# Тестирование и покрытие
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Логи
+*.log
+
+# Системные файлы ОС
+.DS_Store
+Thumbs.db
