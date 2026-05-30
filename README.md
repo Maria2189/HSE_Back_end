@@ -28,27 +28,28 @@
 ```
 HSE_Back_end-main/
 ├── alembic/                       # миграции БД
-│   ├── versions/                  # автосгенерированные ревизии
-│   └── env.py                     # настройка alembic под наше приложение
-├── alembic.ini                    # конфиг alembic
-├── app/
-│   ├── core/
+│   ├── versions/                  # папка для хранения файлов миграций
+│   ├── script.py.mako             # шаблон Alembic для генерации новых файлов миграций 
+│   └── env.py                     # скрипт для связи Alembic с БД и моделями SQLAlchemy
+├── alembic.ini                    # конфигурационный файл Alembic
+├── app/                           # главная директория с бизнес-логикой
+│   ├── core/                      # ядро безопасности
 │   │   ├── config.py              # pydantic-settings: ENV-переменные
 │   │   ├── security.py            # bcrypt, JWT access/refresh
 │   │   └── dependencies.py        # RBAC (RoleChecker), get_current_user
-│   ├── database/
+│   ├── database/                  # работа с БД
 │   │   ├── session.py             # engine, SessionLocal, get_db
 │   │   └── models.py              # SQLAlchemy-модели в 3НФ
 │   ├── schemas/                   # Pydantic-схемы (auth/categories/courses/topics)
 │   ├── services/                  # бизнес-логика, отделённая от роутеров
 │   ├── routers/                   # FastAPI-маршруты по доменам
-│   └── main.py                    # точка входа, lifespan, обработчики ошибок
+│   └── main.py                    # точка входа, создание экземпляра FastAPI, подключение роутеров, настройка CORS и middleware
 ├── tests/                         # pytest-функциональные тесты (97% покрытия)
 ├── Dockerfile
 ├── docker-compose.yml             # web + postgres + redis
 ├── requirements.txt
 ├── make_admin.py                  # CLI для создания администратора
-├── .env.example
+├── .env
 └── README.md
 ```
 
@@ -108,8 +109,11 @@ UNIQUE-ограничения: `users.email`, `categories.name`, `(topics.course
 
 ## Запуск через Docker
 
+> тут и далее команды для PowerShell для Windows!
+
 ```bash
 # 1. Задайте SECRET_KEY (опционально)
+
 # 1.1. Генерируем ключ и сохраняем его в переменную
 $key = python -c "import secrets; print(secrets.token_hex(32))"
 # 1.2. Записываем строку в файл принудительно в UTF-8
@@ -155,11 +159,10 @@ uvicorn app.main:app --reload
 ## Тесты и покрытие
 
 ```bash
-SECRET_KEY=test pytest tests/ -v
-SECRET_KEY=test pytest tests/ --cov=app --cov-report=term-missing
+$env:SECRET_KEY="test"; pytest tests/ --cov=app   
 ```
 
-Тестовая база — отдельный файл `test_db.sqlite`, чтобы не пересекаться с боевыми данными. Покрытие: **97%** (требование задания — 90%). Тесты проверяют валидацию Pydantic, бизнес-логику (доступ к платным темам только после покупки, идемпотентность лайков, конфликт повторной покупки), RBAC (admin vs user vs гость), и устойчивость к SQL-инъекциям в форме логина и параметрах запроса.
+Тестовая база — отдельный файл `test_db.sqlite`, чтобы не пересекаться с боевыми данными. Покрытие: **97%**. Тесты проверяют валидацию Pydantic, бизнес-логику (доступ к платным темам только после покупки, идемпотентность лайков, конфликт повторной покупки), RBAC (admin vs user vs гость), и устойчивость к SQL-инъекциям в форме логина и параметрах запроса.
 
 ---
 
@@ -168,7 +171,7 @@ SECRET_KEY=test pytest tests/ --cov=app --cov-report=term-missing
 | Требование | Реализация |
 |---|---|
 | FastAPI + Pydantic + SQLAlchemy + pytest + Docker + Uvicorn + Alembic + Redis | ✅ все восемь |
-| Декомпозиция: routers/, schemas/, services/, core/ | ✅ |
+| Декомпозиция: routers/, schemas/, services/, core/ | ✅ реализованы |
 | Регистрация / login / refresh / change-password | ✅ `app/routers/auth.py` |
 | Защита от SQL-инъекций | ✅ ORM-параметризация (тесты в `test_root.py`) |
 | Каталог курсов с пагинацией и фильтрами | ✅ `GET /courses/?skip&limit&category_id` |
@@ -182,7 +185,3 @@ SECRET_KEY=test pytest tests/ --cov=app --cov-report=term-missing
 | Обработка невалидных данных | ✅ 422 на валидации, 400/404/409 на бизнес-конфликтах |
 
 ---
-
-## Дополнительный комментарий к сдаче
-
-> *«В основу решения положена конфиденциальная информация»*
