@@ -1,37 +1,37 @@
-# Виртуальные окружения
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
 venv/
 env/
-.venv/
 
-# Кэш Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Секреты и конфигурации
-.env
-
-# Настройки IDE
-.vscode/
-.idea/
-
-# Локальные данные приложения
-appeals_data/
-
-# Локальные базы данных
-*.db
-*.sqlite
-*.sqlite3
-
-# Тестирование и покрытие
+# Тесты и покрытие
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
 
-# Логи
-*.log
+# IDE
+.idea/
+.vscode/
+*.swp
 
-# Системные файлы ОС
+# Локальные БД и временные файлы
+*.db
+*.sqlite
+*.sqlite3
+test_db.sqlite
+
+# Секреты
+.env
+.env.local
+*.pem
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Docker
+*.log

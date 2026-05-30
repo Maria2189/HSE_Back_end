@@ -1,20 +1,51 @@
-version: '3.8'
-
 services:
-  web:
-    build: .
-    container_name: hse_fastapi_app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - redis
+  db:
+    image: postgres:16-alpine
+    container_name: microlearning_db
     environment:
-      - REDIS_URL=redis://redis:6379/0 
+      POSTGRES_USER: microlearning
+      POSTGRES_PASSWORD: microlearning_password
+      POSTGRES_DB: microlearning
     volumes:
-      - ./app/database:/app/app/database
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U microlearning -d microlearning"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
 
   redis:
-    image: redis:alpine
-    container_name: hse_redis
+    image: redis:7-alpine
+    container_name: microlearning_redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    container_name: microlearning_api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://microlearning:microlearning_password@db:5432/microlearning
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-please_override_in_production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  pg_data:
